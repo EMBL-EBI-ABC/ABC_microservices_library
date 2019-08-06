@@ -1,33 +1,52 @@
 """This script will provide proxy to work with Fire API"""
+import json
+import subprocess
+from decouple import config
+from argparse import ArgumentParser
 
 
 class FireAPI:
-    def __init__(self):
-        pass
+    def __init__(self, username, password, archive_name, api_endpoint, filename,
+                 path):
+        self.username = username
+        self.password = password
+        self.archive_name = archive_name
+        self.api_endpoint = api_endpoint
+        self.filepath = filename
+        self.filename = filename.split('/')[-1]
+        self.path = path
 
     def upload_object(self):
         """This function will upload object to Fire database"""
-        pass
+        cmd = f"curl {self.api_endpoint}/objects " \
+            f"-F file=@{self.filepath} " \
+            f"-H 'x-fire-path: {self.path}/{self.filename}' " \
+            f"-H 'x-fire-publish: true' " \
+            f"-u {self.username}:{self.password}"
+        proc = subprocess.Popen([cmd], stdout=subprocess.PIPE, shell=True)
+        (out, err) = proc.communicate()
+        print("Public link is:")
+        self.get_public_link()
 
-    def download_object(self):
-        """This function will download object from Fire database"""
-        pass
-
-    def set_metadata(self):
-        """This function will set metadata of object"""
-        pass
-
-    def remove_metadata(self):
-        """This function will remove metadata from uploaded object"""
-        pass
+    def get_public_link(self):
+        """This function will return public link to uploaded file"""
+        link = f"{self.api_endpoint}/public/" \
+            f"{self.archive_name}/{self.path}/{self.filename}"
+        print(link)
 
     def list_objects(self):
         """This function will list all objects in archive"""
-        pass
-
-    def filter_objects(self):
-        """This function will filter object based on different parameters"""
-        pass
+        cmd = f"curl {self.api_endpoint}/objects " \
+            f"-u {self.username}:{self.password}"
+        proc = subprocess.Popen([cmd], stdout=subprocess.PIPE, shell=True)
+        (out, err) = proc.communicate()
+        out = json.loads(out.decode('utf-8'))
+        print(f"{'File path':150}\t{'Published':10}\t{'FireOId':30}")
+        for file in out:
+            if file['filesystemEntry']:
+                print(f"{file['filesystemEntry']['path']:150}\t"
+                      f"{file['filesystemEntry']['published']}\t"
+                      f"{file['fireOid']:30}")
 
     def delete_objects(self):
         """This function will delete object from Fire database"""
@@ -35,4 +54,32 @@ class FireAPI:
 
 
 if __name__ == "__main__":
-    pass
+    parser = ArgumentParser()
+    parser.add_argument(
+        "-a", "--action", dest="action", help="Wich function to use, could be "
+                                              "'upload_object', "
+                                              "'get_public_link', "
+                                              "'list_objects' and "
+                                              "'delete_object'")
+    parser.add_argument(
+        "-f", "--filename", dest="filename", help="Path to the file you want "
+                                                  "to upload to Fire API")
+    parser.add_argument(
+        "-p", "--path", dest="path", help="Path that will be used for public "
+                                          "access inside Fire API")
+    args = parser.parse_args()
+    fire_api_object = FireAPI(config('USERNAME'), config('PASSWORD'),
+                              config('ARCHIVE_NAME'), config('API_ENDPOINT'),
+                              args.filename, args.path)
+    if args.action == 'list_objects':
+        fire_api_object.list_objects()
+    elif args.action == 'upload_object':
+        fire_api_object.upload_object()
+    elif args.action == 'get_public_link':
+        fire_api_object.get_public_link()
+    elif args.action == 'delete_object':
+        fire_api_object.delete_objects()
+    else:
+        print("Please provide correct action, it could only be "
+              "'upload_object', 'get_public_link', 'list_objects', "
+              "'delete_object'")
