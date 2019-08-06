@@ -58,3 +58,9 @@ For this you need to know fireOId (you can get it using list_objects action)
 ```markdown
 python scripts/fire_api.py -a delete_object -id <fireOId>
 ```
+
+#### How to replace existing object:
+For this you need to know fireOId (you can get it using list_objects action)
+```markdown
+python scripts/fire_api.py -a replace_object -f <path_to_your_file> -p <path_inside_fire_for_public_access> -id <fireOId>
+```

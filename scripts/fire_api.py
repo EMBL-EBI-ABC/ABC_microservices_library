@@ -60,6 +60,11 @@ class FireAPI:
         (out, err) = proc.communicate()
         self.list_objects()
 
+    def replace_object(self, fire_id):
+        """This function will replace existing object in Fire API"""
+        self.delete_objects(fire_id)
+        self.upload_object()
+
 
 if __name__ == "__main__":
     parser = ArgumentParser()
@@ -67,8 +72,9 @@ if __name__ == "__main__":
         "-a", "--action", dest="action", help="Which function to use, could be "
                                               "'upload_object', "
                                               "'get_public_link', "
-                                              "'list_objects' and "
-                                              "'delete_object'")
+                                              "'list_objects', "
+                                              "'delete_object' and "
+                                              "'replace_object'")
     parser.add_argument(
         "-f", "--filename", dest="filename", help="Path to the file you want "
                                                   "to upload to Fire API")
@@ -105,6 +111,12 @@ if __name__ == "__main__":
                                   config('ARCHIVE_NAME'),
                                   config('API_ENDPOINT'))
         fire_api_object.delete_objects(args.id)
+    elif args.action == 'replace_object':
+        fire_api_object = FireAPI(config('USERNAME'), config('PASSWORD'),
+                                  config('ARCHIVE_NAME'),
+                                  config('API_ENDPOINT'),
+                                  args.filename, args.path)
+        fire_api_object.replace_object(args.id)
     else:
         print("Please provide correct action, it could only be "
               "'upload_object', 'get_public_link', 'list_objects', "
