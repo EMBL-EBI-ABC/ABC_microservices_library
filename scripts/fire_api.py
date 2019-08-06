@@ -1,6 +1,7 @@
 """This script will provide proxy to work with Fire API"""
 import json
 import subprocess
+import sys
 from decouple import config
 from argparse import ArgumentParser
 
@@ -48,15 +49,20 @@ class FireAPI:
                       f"{file['filesystemEntry']['published']}\t"
                       f"{file['fireOid']:30}")
 
-    def delete_objects(self):
+    def delete_objects(self, fire_id):
         """This function will delete object from Fire database"""
-        pass
+        cmd = f"curl {self.api_endpoint}/objects/{fire_id} " \
+            f"-u {self.username}:{self.password} " \
+            f"-X DELETE"
+        proc = subprocess.Popen([cmd], stdout=subprocess.PIPE, shell=True)
+        (out, err) = proc.communicate()
+        self.list_objects()
 
 
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument(
-        "-a", "--action", dest="action", help="Wich function to use, could be "
+        "-a", "--action", dest="action", help="Which function to use, could be "
                                               "'upload_object', "
                                               "'get_public_link', "
                                               "'list_objects' and "
@@ -67,7 +73,14 @@ if __name__ == "__main__":
     parser.add_argument(
         "-p", "--path", dest="path", help="Path that will be used for public "
                                           "access inside Fire API")
+    parser.add_argument(
+        "-id", "--fireOId", dest="id",
+        help="Fire API id of object (optional, will be used only to delete "
+             "object)")
     args = parser.parse_args()
+    if len(sys.argv) == 1:
+        parser.print_help(sys.stderr)
+        sys.exit(1)
     fire_api_object = FireAPI(config('USERNAME'), config('PASSWORD'),
                               config('ARCHIVE_NAME'), config('API_ENDPOINT'),
                               args.filename, args.path)
@@ -78,7 +91,7 @@ if __name__ == "__main__":
     elif args.action == 'get_public_link':
         fire_api_object.get_public_link()
     elif args.action == 'delete_object':
-        fire_api_object.delete_objects()
+        fire_api_object.delete_objects(args.id)
     else:
         print("Please provide correct action, it could only be "
               "'upload_object', 'get_public_link', 'list_objects', "
