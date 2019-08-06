@@ -7,15 +7,17 @@ from argparse import ArgumentParser
 
 
 class FireAPI:
-    def __init__(self, username, password, archive_name, api_endpoint, filename,
-                 path):
+    def __init__(self, username, password, archive_name, api_endpoint,
+                 filename=None, path=None):
         self.username = username
         self.password = password
         self.archive_name = archive_name
         self.api_endpoint = api_endpoint
-        self.filepath = filename
-        self.filename = filename.split('/')[-1]
-        self.path = path
+        if filename:
+            self.filepath = filename
+            self.filename = filename.split('/')[-1]
+        if path:
+            self.path = path
 
     def upload_object(self):
         """This function will upload object to Fire database"""
@@ -81,16 +83,27 @@ if __name__ == "__main__":
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
         sys.exit(1)
-    fire_api_object = FireAPI(config('USERNAME'), config('PASSWORD'),
-                              config('ARCHIVE_NAME'), config('API_ENDPOINT'),
-                              args.filename, args.path)
     if args.action == 'list_objects':
+        fire_api_object = FireAPI(config('USERNAME'), config('PASSWORD'),
+                                  config('ARCHIVE_NAME'),
+                                  config('API_ENDPOINT'))
         fire_api_object.list_objects()
     elif args.action == 'upload_object':
+        fire_api_object = FireAPI(config('USERNAME'), config('PASSWORD'),
+                                  config('ARCHIVE_NAME'),
+                                  config('API_ENDPOINT'),
+                                  args.filename, args.path)
         fire_api_object.upload_object()
     elif args.action == 'get_public_link':
+        fire_api_object = FireAPI(config('USERNAME'), config('PASSWORD'),
+                                  config('ARCHIVE_NAME'),
+                                  config('API_ENDPOINT'),
+                                  args.filename, args.path)
         fire_api_object.get_public_link()
     elif args.action == 'delete_object':
+        fire_api_object = FireAPI(config('USERNAME'), config('PASSWORD'),
+                                  config('ARCHIVE_NAME'),
+                                  config('API_ENDPOINT'))
         fire_api_object.delete_objects(args.id)
     else:
         print("Please provide correct action, it could only be "
