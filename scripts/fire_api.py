@@ -2,6 +2,8 @@
 import json
 import subprocess
 import sys
+import hashlib
+import os
 from decouple import config
 from argparse import ArgumentParser
 
@@ -25,7 +27,9 @@ class FireAPI:
             f"-F file=@{self.filepath} " \
             f"-H 'x-fire-path: {self.path}/{self.filename}' " \
             f"-H 'x-fire-publish: true' " \
-            f"-u {self.username}:{self.password}"
+            f"-u {self.username}:{self.password} " \
+              f"-H 'x-fire-size: {self.get_file_size()}' " \
+              f"-H 'x-fire-md5: {self.get_md5_of_file()}'"
         proc = subprocess.Popen([cmd], stdout=subprocess.PIPE, shell=True)
         (out, err) = proc.communicate()
         print("Public link is:")
@@ -39,7 +43,7 @@ class FireAPI:
 
     def list_objects(self):
         """This function will list all objects in archive"""
-        cmd = f"curl {self.api_endpoint}/objects " \
+        cmd = f"curl {self.api_endpoint}/objects?total=1000000 " \
             f"-u {self.username}:{self.password}"
         proc = subprocess.Popen([cmd], stdout=subprocess.PIPE, shell=True)
         (out, err) = proc.communicate()
@@ -64,6 +68,27 @@ class FireAPI:
         """This function will replace existing object in Fire API"""
         self.delete_objects(fire_id)
         self.upload_object()
+
+    def get_md5_of_file(self):
+        """
+        This function will return md5 hash of a file
+        :return: md5 hash value
+        """
+        return hashlib.md5(self.file_as_bytes(
+            open(self.filepath, 'rb'))).hexdigest()
+
+    @staticmethod
+    def file_as_bytes(file):
+        """This function returns file as bits"""
+        with file:
+            return file.read()
+
+    def get_file_size(self):
+        """
+        This function return file size in bytes
+        :return: file size in bytes
+        """
+        return os.path.getsize(self.filepath)
 
 
 if __name__ == "__main__":
