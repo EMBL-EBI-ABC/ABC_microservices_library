@@ -37,8 +37,8 @@ class FireAPI:
 
     def get_public_link(self):
         """This function will return public link to uploaded file"""
-        link = f"{self.api_endpoint}/public/" \
-            f"{self.archive_name}/{self.path}/{self.filename}"
+        link = f"https://data.faang.org/api/fire_api/" \
+               f"{self.path.split('/')[-1]}/{self.filename}"
         print(link)
 
     def list_objects(self):
